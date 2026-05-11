@@ -164,70 +164,85 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                     // to check if it should be blocked after we've pulled it into realm. If it
                     // turns out that it should be dropped, then delete it
                     // TODO Don't store blocked messages in the first place
-                    val action = blockingClient.shouldBlock(message.address).blockingGet()
-                    val shouldDrop = prefs.drop.get()
-                    Timber.v("block=$action, drop=$shouldDrop")
 
-                    if (action is BlockingClient.Action.Block && shouldDrop) {
-                        messageRepo.deleteMessages(listOf(message.id))
+                    if (message.isMms() && prefs.blockMms.get()) {
+                        Timber.v("MMS blocked by global setting")
+                        if (prefs.drop.get()) {
+                            messageRepo.deleteMessages(listOf(message.id))
+                        } else {
+                            messageRepo.markRead(listOf(message.threadId))
+                            conversationRepo.markBlocked(
+                                listOf(message.threadId),
+                                Preferences.BLOCKING_MANAGER_QKSMS,
+                                "MMS blocked"
+                            )
+                        }
                     } else {
-                        when (action) {
-                            is BlockingClient.Action.Block -> {
-                                messageRepo.markRead(listOf(message.threadId))
-                                conversationRepo.markBlocked(
-                                    listOf(message.threadId),
-                                    prefs.blockingManager.get(),
-                                    action.reason
-                                )
+                        val action = blockingClient.shouldBlock(message.address).blockingGet()
+                        val shouldDrop = prefs.drop.get()
+                        Timber.v("block=$action, drop=$shouldDrop")
+
+                        if (action is BlockingClient.Action.Block && shouldDrop) {
+                            messageRepo.deleteMessages(listOf(message.id))
+                        } else {
+                            when (action) {
+                                is BlockingClient.Action.Block -> {
+                                    messageRepo.markRead(listOf(message.threadId))
+                                    conversationRepo.markBlocked(
+                                        listOf(message.threadId),
+                                        prefs.blockingManager.get(),
+                                        action.reason
+                                    )
+                                }
+
+                                is BlockingClient.Action.Unblock ->
+                                    conversationRepo.markUnblocked(message.threadId)
+
+                                else -> Unit
                             }
 
-                            is BlockingClient.Action.Unblock ->
-                                conversationRepo.markUnblocked(message.threadId)
+                            val messageFilterAction = filterRepo.isBlocked(message.getText(), message.address, contactsRepo)
+                            if (messageFilterAction) {
+                                Timber.v("message dropped based on content filters")
+                                messageRepo.deleteMessages(listOf(message.id))
+                                return Result.failure(inputData)
+                            }
 
-                            else -> Unit
+                            // update the conversation
+                            conversationRepo.updateConversations(listOf(message.threadId))
+                            val conversation =
+                                conversationRepo.getOrCreateConversation(message.threadId)
+                                    ?: return Result.failure(inputData)
+
+                            // don't notify (continue) for blocked conversations
+                            if (conversation.blocked) {
+                                Timber.v("no notifications for blocked")
+                                return Result.success(inputData)
+                            }
+
+                            // unarchive conversation if necessary
+                            if (conversation.archived)
+                                conversationRepo.markUnarchived(listOf(conversation.id))
+
+                            // unarchive conversation if necessary
+                            if (conversation.archived) {
+                                Timber.v("conversation unarchived")
+                                conversationRepo.markUnarchived(listOf(conversation.id))
+                            }
+
+                            // update/create notification
+                            Timber.v("update/create notification")
+                            notificationManager.update(conversation.id)
+
+                            // update shortcuts
+                            Timber.v("update shortcuts")
+                            shortcutManager.updateShortcuts()
+                            shortcutManager.getOrCreateShortcut(conversation.id)
+
+                            // update the badge and widget
+                            Timber.v("update badge and widget")
+                            updateBadge.execute(Unit)
                         }
-
-                        val messageFilterAction = filterRepo.isBlocked(message.getText(), message.address, contactsRepo)
-                        if (messageFilterAction) {
-                            Timber.v("message dropped based on content filters")
-                            messageRepo.deleteMessages(listOf(message.id))
-                            return Result.failure(inputData)
-                        }
-
-                        // update the conversation
-                        conversationRepo.updateConversations(listOf(message.threadId))
-                        val conversation =
-                            conversationRepo.getOrCreateConversation(message.threadId)
-                                ?: return Result.failure(inputData)
-
-                        // don't notify (continue) for blocked conversations
-                        if (conversation.blocked) {
-                            Timber.v("no notifications for blocked")
-                            return Result.success(inputData)
-                        }
-
-                        // unarchive conversation if necessary
-                        if (conversation.archived)
-                            conversationRepo.markUnarchived(listOf(conversation.id))
-
-                        // unarchive conversation if necessary
-                        if (conversation.archived) {
-                            Timber.v("conversation unarchived")
-                            conversationRepo.markUnarchived(listOf(conversation.id))
-                        }
-
-                        // update/create notification
-                        Timber.v("update/create notification")
-                        notificationManager.update(conversation.id)
-
-                        // update shortcuts
-                        Timber.v("update shortcuts")
-                        shortcutManager.updateShortcuts()
-                        shortcutManager.getOrCreateShortcut(conversation.id)
-
-                        // update the badge and widget
-                        Timber.v("update badge and widget")
-                        updateBadge.execute(Unit)
                     }
 
                     // send ack to mmsc

@@ -114,6 +114,7 @@ class Preferences @Inject constructor(
     val textSize = rxPrefs.getInteger("textSize", TEXT_SIZE_NORMAL)
     val blockingManager = rxPrefs.getInteger("blockingManager", BLOCKING_MANAGER_QKSMS)
     val drop = rxPrefs.getBoolean("drop", false)
+    val blockMms = rxPrefs.getBoolean("blockMms", false)
     val silentNotContact = rxPrefs.getBoolean("silentNotContact", false)
     val notifAction1 = rxPrefs.getInteger("notifAction1", NOTIFICATION_ACTION_READ)
     val notifAction2 = rxPrefs.getInteger("notifAction2", NOTIFICATION_ACTION_REPLY)

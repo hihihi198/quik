@@ -49,6 +49,9 @@ class BlockingPresenter @Inject constructor(
 
         disposables += prefs.drop.asObservable()
                 .subscribe { enabled -> newState { copy(dropEnabled = enabled) } }
+
+        disposables += prefs.blockMms.asObservable()
+                .subscribe { enabled -> newState { copy(blockMmsEnabled = enabled) } }
     }
 
     override fun bindIntents(view: BlockingView) {
@@ -80,6 +83,10 @@ class BlockingPresenter @Inject constructor(
         view.dropClickedIntent
                 .autoDisposable(view.scope())
                 .subscribe { prefs.drop.set(!prefs.drop.get()) }
+
+        view.blockMmsClickedIntent
+                .autoDisposable(view.scope())
+                .subscribe { prefs.blockMms.set(!prefs.blockMms.get()) }
     }
 
 }

@@ -348,6 +348,8 @@
     <string name="blocking_title">Blocking</string>
     <string name="blocking_drop_title">Drop messages</string>
     <string name="blocking_drop_summary">Drop incoming messages from blocked senders instead of hiding them</string>
+    <string name="blocking_block_mms_title">Block all MMS</string>
+    <string name="blocking_block_mms_summary">Block all incoming MMS messages regardless of sender or content</string>
     <string name="blocking_conversations">Blocked conversations</string>
 
     <string name="blocking_manager_title">Blocking Manager</string>
