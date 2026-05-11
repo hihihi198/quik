@@ -180,6 +180,8 @@ class SettingsController : QkController<SettingsControllerBinding, SettingsView,
 
         binding.longAsMms.checkbox?.isChecked = state.longAsMms
 
+        binding.mmsAutoRetrieve.checkbox?.isChecked = state.mmsAutoRetrieveEnabled
+
         binding.mmsSize.summary = state.maxMmsSizeSummary
         mmsSizeDialog.adapter.selectedItem = state.maxMmsSizeId
 

@@ -137,6 +137,7 @@ class Preferences @Inject constructor(
     val unreadAtTop = rxPrefs.getBoolean("unreadAtTop", false)
 
     val autoDeduplicate = rxPrefs.getBoolean("autoDeduplicateMessages", false)
+    val mmsAutoRetrieve = rxPrefs.getBoolean("auto_download_mms", true)
 
     init {
         // Migrate from old night mode preference to new one, now that we support android Q night mode
