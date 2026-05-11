@@ -24,6 +24,7 @@ import dev.octoshrimpy.quik.feature.widget.WidgetProvider
 import dev.octoshrimpy.quik.injection.scope.ActivityScope
 import dev.octoshrimpy.quik.receiver.BlockThreadReceiver
 import dev.octoshrimpy.quik.receiver.BootReceiver
+import dev.octoshrimpy.quik.receiver.CopyCodeReceiver
 import dev.octoshrimpy.quik.receiver.DefaultSmsChangedReceiver
 import dev.octoshrimpy.quik.receiver.DeleteMessagesReceiver
 import dev.octoshrimpy.quik.receiver.MmsReceivedReceiver
@@ -47,6 +48,10 @@ abstract class BroadcastReceiverBuilderModule {
     @ActivityScope
     @ContributesAndroidInjector
     abstract fun bindBlockThreadReceiver(): BlockThreadReceiver
+
+    @ActivityScope
+    @ContributesAndroidInjector
+    abstract fun bindCopyCodeReceiver(): CopyCodeReceiver
 
     @ActivityScope
     @ContributesAndroidInjector

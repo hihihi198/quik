@@ -46,7 +46,9 @@ import dev.octoshrimpy.quik.feature.qkreply.QkReplyActivity
 import dev.octoshrimpy.quik.manager.PermissionManager
 import dev.octoshrimpy.quik.manager.ShortcutManager
 import dev.octoshrimpy.quik.mapper.CursorToPartImpl
+import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.receiver.BlockThreadReceiver
+import dev.octoshrimpy.quik.receiver.CopyCodeReceiver
 import dev.octoshrimpy.quik.receiver.DeleteMessagesReceiver
 import dev.octoshrimpy.quik.receiver.MessageMarkReceiver
 import dev.octoshrimpy.quik.receiver.RemoteMessagingReceiver
@@ -139,6 +141,8 @@ class NotificationManagerImpl @Inject constructor(
             notificationManager.cancel(threadId.toInt() + 100000)
             return
         }
+
+        val verificationCode: String? = extractVerificationCode(messages)
 
         val conversation = conversationRepo.getConversation(threadId) ?: return
         val lastRecipient = conversation.lastMessage?.let { lastMessage ->
@@ -366,6 +370,22 @@ class NotificationManagerImpl @Inject constructor(
                 }
                 .forEach { notification.addAction(it) }
 
+        if (verificationCode != null) {
+            val copyIntent = Intent(context, CopyCodeReceiver::class.java)
+                .putExtra("code", verificationCode)
+            val copyPI = PendingIntent.getBroadcast(
+                context, threadId.toInt() + 200000,
+                copyIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val copyAction = NotificationCompat.Action.Builder(
+                R.drawable.ic_content_copy_black_24dp,
+                context.getString(R.string.notification_copy_code),
+                copyPI
+            ).build()
+            notification.addAction(copyAction)
+        }
+
         if (prefs.qkreply.get()) {
             notification.priority = NotificationCompat.PRIORITY_DEFAULT
 
@@ -587,6 +607,36 @@ class NotificationManagerImpl @Inject constructor(
 
     override fun cancel(i: Int) {
         notificationManager.cancel(i)
+    }
+
+    private fun extractVerificationCode(messages: List<Message>): String? {
+        val smsMessages = messages.filter { it.isSms() }
+        if (smsMessages.isEmpty()) return null
+        // Messages are sorted by date ascending (oldest first); use last() for the newest
+        val latest = smsMessages.last()
+        val body = latest.body
+        Timber.v("Checking for verification code in: $body")
+
+        // Find the keyword position
+        val verificationKeyword = "verification"
+        val chineseKeyword = "验证码"
+        val keywordIndex = body.indexOf(chineseKeyword)
+            .takeIf { it >= 0 }
+            ?: body.indexOf(verificationKeyword, ignoreCase = true)
+            .takeIf { it >= 0 }
+            ?: return null
+
+        // Collect all 4-6 digit sequences with their positions
+        val candidates = Regex("\\d+").findAll(body)
+            .map { it.value to it.range.first }
+            .filter { (code, _) -> code.length in 4..6 }
+            .toList()
+
+        if (candidates.isEmpty()) return null
+
+        // Pick the one closest to the keyword
+        val best = candidates.minByOrNull { (_, pos) -> kotlin.math.abs(pos - keywordIndex) }
+        return best?.first
     }
 
 }

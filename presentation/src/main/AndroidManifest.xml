@@ -173,6 +173,7 @@
             </intent-filter>
         </receiver>
         <receiver android:name=".receiver.RemoteMessagingReceiver" />
+        <receiver android:name=".receiver.CopyCodeReceiver" />
         <receiver android:name=".receiver.NightModeReceiver" />
         <receiver
             android:name=".receiver.SmsProviderChangedReceiver"

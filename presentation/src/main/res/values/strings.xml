@@ -351,6 +351,7 @@
     <string name="blocking_block_mms_title">Block all MMS</string>
     <string name="blocking_block_mms_summary">Block all incoming MMS messages regardless of sender or content</string>
     <string name="blocking_conversations">Blocked conversations</string>
+    <string name="notification_copy_code">Copy code</string>
 
     <string name="blocking_manager_title">Blocking Manager</string>
     <string name="blocking_manager_qksms_summary">Built-in blocking functionality in QUIK</string>
