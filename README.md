@@ -7,7 +7,9 @@
 <img src="https://hosted.weblate.org/widget/quik/svg-badge.svg" alt="Translation status" />
 </a>
 
-QUIK is an open source replacement to the [stock messaging app](https://github.com/android/platform_packages_apps_mms) on Android. It is a continuation of [QKSMS](https://github.com/moezbhatti/qksms). 
+QUIK is an open source replacement to the [stock messaging app](https://github.com/android/platform_packages_apps_mms) on Android. It is a continuation of [QKSMS](https://github.com/moezbhatti/qksms).
+
+> **Note:** This is a fork of [quik-sms/quik](https://github.com/quik-sms/quik) with additional features. 
 
 ## Features
 
@@ -24,6 +26,13 @@ QUIK is an open source replacement to the [stock messaging app](https://github.c
 - Swipe actions
 - Emoji reaction handling
 - and much, much more
+
+## Fork features
+
+Additional features in this fork:
+
+- **Block all MMS** — Toggle to block all incoming MMS messages regardless of sender
+- **Copy verification code** — Notification action to copy verification codes from incoming SMS
 
 ## Download
 
